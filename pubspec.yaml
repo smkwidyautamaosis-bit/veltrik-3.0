@@ -15,6 +15,7 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^33.2.3
   google_fonts: ^8.0.2
   file_picker: ^10.3.10 
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -35,5 +36,6 @@ flutter:
   uses-material-design: true
 
   # Daftarkan folder assets di sini
-  assets:
-    - assets/images/icon.png
+  assets: 
+   - .env
+   - assets/images/icon.png
