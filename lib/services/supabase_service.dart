@@ -42,7 +42,7 @@ class SupabaseService {
 
   Future<Map<String, dynamic>> getUserProfile() async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw "Sesi tidak ditemukan.";
+    if (userId == null) throw Exception("Sesi tidak ditemukan.");
     final data = await _client
         .from('profiles')
         .select()
@@ -62,8 +62,7 @@ class SupabaseService {
           .order('created_at', ascending: false);
       return (data as List).map((e) => MaterialModel.fromJson(e)).toList();
     } catch (e) {
-      debugPrint("Error getMaterials: $e");
-      return [];
+      throw Exception("Gagal memuat materi: $e");
     }
   }
 
@@ -95,7 +94,7 @@ class SupabaseService {
   // ==========================================
   Future<void> submitPaymentProof(File proofFile) async {
     final user = _client.auth.currentUser;
-    if (user == null) throw "Sesi habis.";
+    if (user == null) throw Exception("Sesi habis.");
     final ext = proofFile.path.split('.').last;
     final fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.$ext';
     await _client.storage.from('payments').upload(fileName, proofFile);
@@ -120,14 +119,12 @@ class SupabaseService {
   }
 
   Future<void> approveTransaction(String transactionId, String userId) async {
-    await _client
-        .from('transactions')
-        .update({'status': 'approved'})
-        .eq('id', transactionId);
-    await _client
-        .from('profiles')
-        .update({'is_premium': true})
-        .eq('id', userId);
+    // Memanggil PostgreSQL RPC (Function) di sisi server untuk keamanan.
+    // Hanya pengguna dengan role 'admin' yang bisa menjalankan fungsi ini di database.
+    await _client.rpc('approve_premium_transaction', params: {
+      't_id': transactionId,
+      'u_id': userId,
+    });
   }
 
   Future<List<dynamic>> getAllUsers() async {

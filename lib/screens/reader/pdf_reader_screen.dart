@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:screen_protector/screen_protector.dart';
 import '../../core/constants.dart';
 
 class PdfReaderScreen extends StatefulWidget {
@@ -15,6 +16,28 @@ class PdfReaderScreen extends StatefulWidget {
 class _PdfReaderScreenState extends State<PdfReaderScreen> {
   final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
   bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initScreenProtector();
+  }
+
+  void _initScreenProtector() async {
+    await ScreenProtector.preventScreenshotOn();
+    await ScreenProtector.protectDataLeakageWithColor(Colors.black);
+  }
+
+  @override
+  void dispose() {
+    _disposeScreenProtector();
+    super.dispose();
+  }
+
+  void _disposeScreenProtector() async {
+    await ScreenProtector.preventScreenshotOff();
+    await ScreenProtector.protectDataLeakageWithColorOff();
+  }
 
   @override
   Widget build(BuildContext context) {

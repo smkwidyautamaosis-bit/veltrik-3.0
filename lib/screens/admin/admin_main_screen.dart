@@ -30,7 +30,14 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       _materials = await _service.getMaterials();
       _users = await _service.getAllUsers();
     } catch (e) {
-      debugPrint("Load Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
