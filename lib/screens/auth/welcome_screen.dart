@@ -16,19 +16,25 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.bolt, size: 100, color: VeltrikColors.cyanAccent),
-            const SizedBox(height: 10),
+            // Menggunakan Logo Naga asli dari folder assets
+            Image.asset("assets/images/icon.png", height: 120),
+            const SizedBox(height: 20),
             Text(
               "Veltrik",
               style: GoogleFonts.exo2(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 60),
             const Text(
               "WELCOME!",
-              style: TextStyle(letterSpacing: 4, fontSize: 18),
+              style: TextStyle(
+                letterSpacing: 4,
+                fontSize: 18,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 60),
             _buildBtn(

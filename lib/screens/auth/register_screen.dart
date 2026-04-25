@@ -1,40 +1,43 @@
 import 'package:flutter/material.dart';
 import '../../services/supabase_service.dart';
+import 'verify_otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _user = TextEditingController(),
-      _email = TextEditingController(),
-      _pass = TextEditingController(),
-      _phone = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _service = SupabaseService();
   bool _isLoading = false;
 
-  void _handleReg() async {
+  void _register() async {
     setState(() => _isLoading = true);
     try {
-      await _service.register(_email.text.trim(), _pass.text.trim(), {
-        'username': _user.text.trim(),
-        'phone': _phone.text.trim(),
+      await _service.register(_emailController.text, _passwordController.text, {
+        'username': _usernameController.text,
+        'role': 'user',
+        'is_premium': false,
+        'phone': _phoneController.text,
       });
-
-      // PERBAIKAN: Cek mounted sebelum menggunakan BuildContext setelah await
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
+      Navigator.push(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Registrasi Berhasil!")));
-      Navigator.pop(context);
+        MaterialPageRoute(
+          builder: (_) => VerifyOtpScreen(email: _emailController.text),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ).showSnackBar(SnackBar(content: Text("Daftar Gagal: $e")));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -43,45 +46,137 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            children: [
-              const Text(
-                "New Identity",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      backgroundColor: const Color(0xFFE6ECF5),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Center(
+              // Path gambar sudah diperbaiki
+              child: Image.asset(
+                'assets/images/icon.png',
+                height: 100,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.local_fire_department,
+                  size: 80,
+                  color: Colors.blueAccent,
+                ),
               ),
-              const SizedBox(height: 40),
-              TextField(
-                controller: _user,
-                decoration: const InputDecoration(hintText: "Username"),
+            ),
+          ),
+
+          Expanded(
+            flex: 8,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1B2A49),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
               ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: _email,
-                decoration: const InputDecoration(hintText: "Email"),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: _pass,
-                obscureText: true,
-                decoration: const InputDecoration(hintText: "Password"),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: _phone,
-                decoration: const InputDecoration(hintText: "Phone"),
-              ),
-              const SizedBox(height: 40),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _handleReg,
-                      child: const Text("CREATE ACCOUNT"),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Register",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-            ],
+                    Container(
+                      margin: const EdgeInsets.only(top: 5, bottom: 25),
+                      height: 2,
+                      width: 60,
+                      color: Colors.white,
+                    ),
+
+                    _buildPillTextField(
+                      controller: _usernameController,
+                      icon: Icons.person,
+                      hint: "Username",
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPillTextField(
+                      controller: _emailController,
+                      icon: Icons.email,
+                      hint: "Email",
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPillTextField(
+                      controller: _passwordController,
+                      icon: Icons.lock,
+                      hint: "Password",
+                      isObscure: true,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPillTextField(
+                      controller: _phoneController,
+                      icon: Icons.phone_android,
+                      hint: "Phone",
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    Center(
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : SizedBox(
+                              width: 150,
+                              height: 45,
+                              child: ElevatedButton(
+                                onPressed: _register,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF1B2A49),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Sign Up",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPillTextField({
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+    bool isObscure = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscure,
+        style: const TextStyle(color: Color(0xFF1B2A49)),
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Colors.grey),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 15,
           ),
         ),
       ),

@@ -2,18 +2,69 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../core/constants.dart';
 
-class PdfReaderScreen extends StatelessWidget {
-  final String url, title;
+class PdfReaderScreen extends StatefulWidget {
+  final String url;
+  final String title;
+
   const PdfReaderScreen({super.key, required this.url, required this.title});
+
+  @override
+  State<PdfReaderScreen> createState() => _PdfReaderScreenState();
+}
+
+class _PdfReaderScreenState extends State<PdfReaderScreen> {
+  final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
+  bool _isLoading = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VeltrikColors.lightBg,
       appBar: AppBar(
-        title: Text(title),
         backgroundColor: VeltrikColors.navyBase,
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_border),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Fitur Bookmark segera hadir!")),
+              );
+            },
+          ),
+        ],
       ),
-      body: SfPdfViewer.network(url),
+      body: Stack(
+        children: [
+          SfPdfViewer.network(
+            widget.url,
+            key: _pdfViewerKey,
+            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+              setState(() => _isLoading = false);
+            },
+            onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+              setState(() => _isLoading = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Gagal memuat PDF: ${details.description}"),
+                ),
+              );
+            },
+          ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: VeltrikColors.navyBase),
+            ),
+        ],
+      ),
     );
   }
 }

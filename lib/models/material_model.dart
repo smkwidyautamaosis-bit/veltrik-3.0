@@ -2,7 +2,7 @@ class MaterialModel {
   final String id;
   final String title;
   final String description;
-  final int price;
+  final num price; // Menggunakan num agar fleksibel (integer/desimal)
   final String filePath;
 
   MaterialModel({
@@ -13,13 +13,14 @@ class MaterialModel {
     required this.filePath,
   });
 
-  factory MaterialModel.fromMap(Map<String, dynamic> map) {
+  // Fungsi untuk mengubah data mentah JSON dari Supabase menjadi Model Dart
+  factory MaterialModel.fromJson(Map<String, dynamic> json) {
     return MaterialModel(
-      id: map['id'].toString(),
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      price: map['price'] ?? 0,
-      filePath: map['file_path'] ?? '',
+      id: json['id'] ?? '',
+      title: json['title'] ?? 'Tanpa Judul',
+      description: json['description'] ?? '',
+      price: json['price'] ?? 0,
+      filePath: json['file_path'] ?? '',
     );
   }
 }
