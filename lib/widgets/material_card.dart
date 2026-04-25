@@ -10,19 +10,27 @@ class MaterialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withOpacity(0.05),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-          child: Column(
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(
@@ -33,20 +41,19 @@ class MaterialCard extends StatelessWidget {
               const Spacer(),
               Text(
                 material.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: VeltrikColors.navyBase),
                 maxLines: 2,
-              ),
-              const SizedBox(height: 5),
-              Text(
-                "Rp ${material.price}",
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
                 height: 35,
                 decoration: BoxDecoration(
-                  color: VeltrikColors.cyanAccent,
+                  gradient: const LinearGradient(
+                    colors: [VeltrikColors.cyanAccent, Colors.blueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Center(
@@ -62,6 +69,7 @@ class MaterialCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

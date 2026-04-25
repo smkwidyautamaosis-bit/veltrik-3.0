@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import package dotenv
 import 'core/constants.dart';
-import 'screens/auth/welcome_screen.dart';
+import 'screens/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,26 +29,26 @@ class VeltrikApp extends StatelessWidget {
       title: 'Veltrik',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
         scaffoldBackgroundColor:
-            VeltrikColors.navyBase, // Menggunakan konstanta warna
+            VeltrikColors.lightBg, // Menggunakan warna terang (Light Mode)
         primaryColor: VeltrikColors.cyanAccent,
         textTheme: GoogleFonts.poppinsTextTheme(
           Theme.of(context).textTheme,
-        ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+        ).apply(bodyColor: VeltrikColors.navyBase, displayColor: VeltrikColors.navyBase),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withValues(
+          fillColor: Colors.black.withValues(
             alpha: 0.05,
-          ), // Diperbarui dari withOpacity agar tidak deprecated [cite: 4]
+          ), 
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,
           ),
-          hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+          hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
         ),
       ),
-      home: const WelcomeScreen(), // Layar awal aplikasi
+      home: const SplashScreen(), // Menampilkan Splash Screen lebih dulu
     );
   }
 }
