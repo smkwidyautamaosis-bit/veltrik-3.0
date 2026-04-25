@@ -79,27 +79,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Image.asset('assets/images/icon.png', height: 55),
               const SizedBox(width: 15),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "VELTRIK",
-                    style: TextStyle(
-                      color: VeltrikColors.cyanAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 2.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "VELTRIK",
+                      style: TextStyle(
+                        color: VeltrikColors.cyanAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 2.5,
+                      ),
                     ),
-                  ),
-                  Text(
-                    "Halo, $_username!",
-                    style: GoogleFonts.exo2(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22,
-                      color: VeltrikColors.navyBase,
+                    Text(
+                      "Halo, $_username!",
+                      style: GoogleFonts.exo2(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 22,
+                        color: VeltrikColors.navyBase,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

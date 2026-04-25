@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/material_model.dart';
 
@@ -62,6 +61,9 @@ class SupabaseService {
           .order('created_at', ascending: false);
       return (data as List).map((e) => MaterialModel.fromJson(e)).toList();
     } catch (e) {
+      if (e.toString().contains("SocketException") || e.toString().contains("Failed host lookup") || e.toString().contains("ClientException")) {
+        throw Exception("Koneksi Bermasalah. Periksa jaringan Anda.");
+      }
       throw Exception("Gagal memuat materi: $e");
     }
   }
@@ -110,6 +112,23 @@ class SupabaseService {
         .from('transactions')
         .select('*, profiles(username)')
         .eq('status', 'pending');
+  }
+
+  Future<List<dynamic>> getUserTransactions() async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception("Sesi tidak ditemukan.");
+      return await _client
+          .from('transactions')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+    } catch (e) {
+      if (e.toString().contains("SocketException") || e.toString().contains("Failed host lookup") || e.toString().contains("ClientException")) {
+        throw Exception("Koneksi Bermasalah. Periksa jaringan Anda.");
+      }
+      throw Exception("Gagal memuat transaksi: $e");
+    }
   }
 
   Future<String> getPaymentProofUrl(String filePath) async {
