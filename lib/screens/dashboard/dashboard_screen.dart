@@ -30,6 +30,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isPremium = false;
   String _username = 'User';
 
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +48,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (mounted) {
         setState(() {
-          _role = profile['role'] ?? 'user';
-          _isPremium = profile['is_premium'] ?? false;
-          _username = profile['username'] ?? 'User';
+          // FIX: Penanganan type casting Object? secara aman untuk strict Dart
+          _role = profile['role']?.toString() ?? 'user';
+          _isPremium = profile['is_premium'] == true;
+          _username = profile['username']?.toString() ?? 'User';
           _data = materials;
           _isLoading = false;
         });
@@ -66,9 +69,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Widget _buildHistoryOrAdminTab() {
+    if (_role == 'admin') return const AdminMainScreen();
+    if (_isPremium) return const TransactionHistoryScreen();
+    return const UpgradeScreen();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VeltrikColors.lightBg,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildHomeTab(),
+          _buildHistoryOrAdminTab(),
+          const DeviceModScreen(),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: _buildNav(),
+    );
+  }
+
+  Widget _buildHomeTab() {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         toolbarHeight: 85,
         backgroundColor: Colors.transparent,
@@ -77,7 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: const EdgeInsets.only(top: 10),
           child: Row(
             children: [
-              Image.asset('assets/images/icon.png', height: 55),
+              Image.asset('assets/images/icon.png', height: 45),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
@@ -88,7 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: TextStyle(
                         color: VeltrikColors.cyanAccent,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 14,
                         letterSpacing: 2.5,
                       ),
                     ),
@@ -96,7 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       "Halo, $_username!",
                       style: GoogleFonts.exo2(
                         fontWeight: FontWeight.w900,
-                        fontSize: 22,
+                        fontSize: 20,
                         color: VeltrikColors.navyBase,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -112,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: VeltrikColors.cyanAccent),
             )
-          : _buildBody(),
+          : _buildGridBody(),
       floatingActionButton: _role == 'admin'
           ? FloatingActionButton(
               backgroundColor: VeltrikColors.cyanAccent,
@@ -128,23 +154,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: const Icon(Icons.add, color: VeltrikColors.navyBase),
             )
           : null,
-      bottomNavigationBar: _buildNav(),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildGridBody() {
     if (_data.isEmpty) {
       return const Center(
         child: Text("Materi Kosong", style: TextStyle(color: Colors.black54)),
       );
     }
     return GridView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.8,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.9,
       ),
       itemCount: _data.length,
       itemBuilder: (ctx, i) => MaterialCard(
@@ -171,55 +196,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildNav() {
     return Container(
-      height: 90,
+      height: 85,
       padding: const EdgeInsets.only(bottom: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: VeltrikColors.navyDark,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(35),
-          topRight: Radius.circular(35),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildNavItem(Icons.home_rounded, "Beranda", true, () {}),
+          _buildNavItem(Icons.home_rounded, "Beranda", 0),
           _buildNavItem(
             _role == 'admin' ? Icons.fact_check_rounded : Icons.history_rounded,
             _role == 'admin' ? "Admin" : "Riwayat",
-            false,
-            () {
-              if (_role == 'admin') {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminMainScreen())).then((_) => _initDashboard());
-              } else if (_isPremium) {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionHistoryScreen()));
-              } else {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const UpgradeScreen()));
-              }
-            },
+            1,
           ),
-          _buildNavItem(Icons.terminal_rounded, "Device Mod", false, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const DeviceModScreen()));
-          }),
-          _buildNavItem(Icons.person_rounded, "Profil", false, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())).then((_) => _initDashboard());
-          }),
+          _buildNavItem(Icons.terminal_rounded, "System", 2),
+          _buildNavItem(Icons.person_rounded, "Profil", 3),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive, VoidCallback onTap) {
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isActive = _selectedIndex == index;
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        setState(() => _selectedIndex = index);
+        if (index == 0) _initDashboard();
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
             color: isActive ? VeltrikColors.cyanAccent : Colors.white38,
-            size: 26,
+            size: 24,
           ),
           const SizedBox(height: 4),
           Text(

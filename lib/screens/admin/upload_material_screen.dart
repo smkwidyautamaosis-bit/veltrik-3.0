@@ -20,7 +20,6 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
   bool _isLoading = false;
   final _service = SupabaseService();
 
-  // Fungsi pilih file PDF yang stabil di versi 10.x
   void _pickPdf() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -42,7 +41,6 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
   }
 
   void _handleUpload() async {
-    // Validasi input
     if (_titleController.text.isEmpty ||
         _priceController.text.isEmpty ||
         _selectedFile == null) {
@@ -83,78 +81,155 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
     return Scaffold(
       backgroundColor: VeltrikColors.navyBase,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VeltrikColors.navyDark,
         elevation: 0,
+        centerTitle: true,
         title: const Text(
-          "Admin: Upload PDF",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          "Form Upload Materi",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(25),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildLabel("JUDUL MATERI"),
-            _buildTextField(_titleController, "Masukkan judul PDF..."),
+            // Panel Form
+            Container(
+              padding: const EdgeInsets.all(25),
+              decoration: BoxDecoration(
+                color: VeltrikColors.navyDark,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Informasi Dokumen",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
-            const SizedBox(height: 20),
-            _buildLabel("DESKRIPSI"),
-            _buildTextField(
-              _descController,
-              "Apa yang akan user pelajari?",
-              maxLines: 3,
+                  _buildLabel("JUDUL MATERI"),
+                  _buildTextField(
+                    _titleController,
+                    "Misal: Modul Flutter Advanced",
+                    Icons.title,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("DESKRIPSI"),
+                  _buildTextField(
+                    _descController,
+                    "Jelaskan isi materi secara singkat...",
+                    Icons.description,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("HARGA MATERI (RP)"),
+                  _buildTextField(
+                    _priceController,
+                    "0 untuk gratis, misal: 50000",
+                    Icons.monetization_on,
+                    isNumber: true,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 25),
 
-            const SizedBox(height: 20),
-            _buildLabel("HARGA (RP)"),
-            _buildTextField(_priceController, "Contoh: 50000", isNumber: true),
-
-            const SizedBox(height: 30),
-
-            // UI Pilih File yang Estetik
+            // Panel Upload
+            const Text(
+              "File Dokumen (PDF)",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 15),
             InkWell(
               onTap: _pickPdf,
+              borderRadius: BorderRadius.circular(20),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(30),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: _selectedFile != null
+                      ? VeltrikColors.cyanAccent.withValues(alpha: 0.1)
+                      : VeltrikColors.navyDark,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: VeltrikColors.cyanAccent.withValues(alpha: 0.3),
+                    color: _selectedFile != null
+                        ? VeltrikColors.cyanAccent
+                        : Colors.white24,
                     width: 2,
+                    style: BorderStyle.solid,
                   ),
                 ),
                 child: Column(
                   children: [
                     Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 50,
+                      _selectedFile != null
+                          ? Icons.task_alt
+                          : Icons.cloud_upload_rounded,
+                      size: 60,
                       color: _selectedFile != null
                           ? VeltrikColors.cyanAccent
-                          : Colors.white24,
+                          : Colors.white38,
                     ),
                     const SizedBox(height: 15),
                     Text(
                       _selectedFile != null
-                          ? _selectedFile!.path.split('/').last
-                          : "Ketuk untuk memilih PDF",
-                      textAlign: TextAlign.center,
+                          ? "File Terpilih:"
+                          : "Tarik & Lepas File atau Ketuk Disini",
                       style: TextStyle(
                         color: _selectedFile != null
-                            ? Colors.white
-                            : Colors.white38,
-                        fontWeight: FontWeight.bold,
+                            ? VeltrikColors.cyanAccent
+                            : Colors.white54,
                       ),
                     ),
+                    if (_selectedFile != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        _selectedFile!.path.split('/').last,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
+
+            // Tombol Publish
             _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
@@ -164,25 +239,28 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
                 : SizedBox(
                     width: double.infinity,
                     height: 55,
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: _handleUpload,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: VeltrikColors.cyanAccent,
                         foregroundColor: VeltrikColors.navyBase,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
                         elevation: 5,
                       ),
-                      child: const Text(
-                        "PUBLISH SEKARANG",
+                      icon: const Icon(Icons.publish, size: 24),
+                      label: const Text(
+                        "PUBLISH MATERI",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
                       ),
                     ),
                   ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -206,7 +284,8 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
 
   Widget _buildTextField(
     TextEditingController controller,
-    String hint, {
+    String hint,
+    IconData icon, {
     int maxLines = 1,
     bool isNumber = false,
   }) {
@@ -217,12 +296,17 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white12),
+        hintStyle: const TextStyle(color: Colors.white38),
+        prefixIcon: maxLines == 1 ? Icon(icon, color: Colors.white54) : null,
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: VeltrikColors.cyanAccent),
         ),
       ),
     );

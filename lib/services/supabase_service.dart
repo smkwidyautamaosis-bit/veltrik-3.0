@@ -5,8 +5,19 @@ import '../models/material_model.dart';
 class SupabaseService {
   final _client = Supabase.instance.client;
 
+  // Helper untuk penanganan error jaringan agar tidak berulang
+  void _handleNetworkError(Object e, String defaultMessage) {
+    final errorStr = e.toString();
+    if (errorStr.contains("SocketException") ||
+        errorStr.contains("Failed host lookup") ||
+        errorStr.contains("ClientException")) {
+      throw Exception("Koneksi Bermasalah. Periksa jaringan Anda.");
+    }
+    throw Exception("$defaultMessage: $e");
+  }
+
   // ==========================================
-  // 1. AUTHENTICATION (PENTING: Jangan Dihapus!)
+  // 1. AUTHENTICATION
   // ==========================================
   Future<AuthResponse> login(String email, String password) async {
     return await _client.auth.signInWithPassword(
@@ -47,7 +58,7 @@ class SupabaseService {
         .select()
         .eq('id', userId)
         .single();
-    return data; // FIX: Menghapus cast 'as Map' yang tidak perlu
+    return data;
   }
 
   // ==========================================
@@ -61,10 +72,8 @@ class SupabaseService {
           .order('created_at', ascending: false);
       return (data as List).map((e) => MaterialModel.fromJson(e)).toList();
     } catch (e) {
-      if (e.toString().contains("SocketException") || e.toString().contains("Failed host lookup") || e.toString().contains("ClientException")) {
-        throw Exception("Koneksi Bermasalah. Periksa jaringan Anda.");
-      }
-      throw Exception("Gagal memuat materi: $e");
+      _handleNetworkError(e, "Gagal memuat materi");
+      return []; // Dead code, exception thrown above
     }
   }
 
@@ -124,10 +133,8 @@ class SupabaseService {
           .eq('user_id', userId)
           .order('created_at', ascending: false);
     } catch (e) {
-      if (e.toString().contains("SocketException") || e.toString().contains("Failed host lookup") || e.toString().contains("ClientException")) {
-        throw Exception("Koneksi Bermasalah. Periksa jaringan Anda.");
-      }
-      throw Exception("Gagal memuat transaksi: $e");
+      _handleNetworkError(e, "Gagal memuat transaksi");
+      return [];
     }
   }
 
@@ -138,12 +145,10 @@ class SupabaseService {
   }
 
   Future<void> approveTransaction(String transactionId, String userId) async {
-    // Memanggil PostgreSQL RPC (Function) di sisi server untuk keamanan.
-    // Hanya pengguna dengan role 'admin' yang bisa menjalankan fungsi ini di database.
-    await _client.rpc('approve_premium_transaction', params: {
-      't_id': transactionId,
-      'u_id': userId,
-    });
+    await _client.rpc(
+      'approve_premium_transaction',
+      params: {'t_id': transactionId, 'u_id': userId},
+    );
   }
 
   Future<List<dynamic>> getAllUsers() async {

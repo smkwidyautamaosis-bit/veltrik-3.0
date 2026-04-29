@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/supabase_service.dart';
 import '../dashboard/dashboard_screen.dart';
-import 'register_screen.dart';
+import '../admin/admin_main_screen.dart';
+import '../../core/constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,20 +17,40 @@ class _LoginScreenState extends State<LoginScreen> {
   final _service = SupabaseService();
   bool _isLoading = false;
 
-  void _login() async {
+  void _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty)
+      return;
+
     setState(() => _isLoading = true);
     try {
-      await _service.login(_emailController.text, _passwordController.text);
+      await _service.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      // Ambil profil untuk cek role
+      final profile = await _service.getUserProfile();
+      final isAdmin = profile['role'] == 'admin';
+
       if (!mounted) return;
-      Navigator.pushReplacement(
+
+      // Redirect berdasarkan role
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(
+          builder: (_) =>
+              isAdmin ? const AdminMainScreen() : const DashboardScreen(),
+        ),
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Login Gagal: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Login Gagal: $e"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -39,166 +59,68 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6ECF5),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  // Path gambar sudah diperbaiki
-                  Image.asset(
-                    'assets/images/icon.png',
-                    height: 120,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.local_fire_department,
-                      size: 100,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Veltrik",
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1B2A49),
-                    ),
-                  ),
-                ],
+      backgroundColor: VeltrikColors.lightBg,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            children: [
+              Image.asset('assets/images/icon.png', height: 100),
+              const SizedBox(height: 20),
+              Text(
+                "VELTRIK",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: VeltrikColors.navyBase,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
-          ),
-
-          Expanded(
-            flex: 6,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1B2A49),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+              const Text(
+                "Secure Digital Library",
+                style: TextStyle(color: Colors.black45),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 5, bottom: 30),
-                      height: 2,
-                      width: 50,
-                      color: Colors.white,
-                    ),
-
-                    const Text(
-                      "Email",
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    const SizedBox(height: 5),
-                    _buildPillTextField(
-                      controller: _emailController,
-                      icon: Icons.person,
-                      hint: "Masukkan Email",
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      "Password",
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    const SizedBox(height: 5),
-                    _buildPillTextField(
-                      controller: _passwordController,
-                      icon: Icons.lock,
-                      hint: "Masukkan Password",
-                      isObscure: true,
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    Center(
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : SizedBox(
-                              width: 150,
-                              height: 45,
-                              child: ElevatedButton(
-                                onPressed: _login,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: const Color(0xFF1B2A49),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Log In",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
+              const SizedBox(height: 40),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  hintText: "Email Address",
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+              ),
+              const SizedBox(height: 30),
+              _isLoading
+                  ? const CircularProgressIndicator(
+                      color: VeltrikColors.cyanAccent,
+                    )
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VeltrikColors.navyBase,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
                         child: const Text(
-                          "New User ? SIGN UP",
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          "LOGIN ACCESS",
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPillTextField({
-    required TextEditingController controller,
-    required IconData icon,
-    required String hint,
-    bool isObscure = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isObscure,
-        style: const TextStyle(color: Color(0xFF1B2A49)),
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 15,
+            ],
           ),
         ),
       ),

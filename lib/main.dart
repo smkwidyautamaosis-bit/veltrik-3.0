@@ -29,18 +29,18 @@ class VeltrikApp extends StatelessWidget {
       title: 'Veltrik',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: true, // Tambahan untuk UI/UX yang lebih modern
         brightness: Brightness.light,
-        scaffoldBackgroundColor:
-            VeltrikColors.lightBg, // Menggunakan warna terang (Light Mode)
+        scaffoldBackgroundColor: VeltrikColors.lightBg,
         primaryColor: VeltrikColors.cyanAccent,
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
-        ).apply(bodyColor: VeltrikColors.navyBase, displayColor: VeltrikColors.navyBase),
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme)
+            .apply(
+              bodyColor: VeltrikColors.navyBase,
+              displayColor: VeltrikColors.navyBase,
+            ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.black.withValues(
-            alpha: 0.05,
-          ), 
+          fillColor: Colors.black.withValues(alpha: 0.05),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,
@@ -48,7 +48,7 @@ class VeltrikApp extends StatelessWidget {
           hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
         ),
       ),
-      home: const SplashScreen(), // Menampilkan Splash Screen lebih dulu
+      home: const SplashScreen(),
     );
   }
 }

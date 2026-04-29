@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/constants.dart';
+import '../../services/supabase_service.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../admin/admin_main_screen.dart';
 import 'welcome_screen.dart';
+import '../../core/constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,37 +13,40 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+class _SplashScreenState extends State<SplashScreen> {
+  final _service = SupabaseService();
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..forward();
-
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    );
-
-    _navigateToNext();
+    _checkSession();
   }
 
-  void _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+  Future<void> _checkSession() async {
+    await Future.delayed(const Duration(seconds: 2));
+    final session = Supabase.instance.client.auth.currentSession;
+
     if (!mounted) return;
 
-    final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
+      try {
+        final profile = await _service.getUserProfile();
+        final isAdmin = profile['role'] == 'admin';
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                isAdmin ? const AdminMainScreen() : const DashboardScreen(),
+          ),
+        );
+      } catch (e) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
+      }
     } else {
       Navigator.pushReplacement(
         context,
@@ -51,36 +56,17 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: VeltrikColors.navyBase,
       body: Center(
-        child: FadeTransition(
-          opacity: _animation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/icon.png',
-                height: 150,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.local_fire_department,
-                  size: 150,
-                  color: VeltrikColors.cyanAccent,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(
-                color: VeltrikColors.cyanAccent,
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/icon.png', height: 120),
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(color: VeltrikColors.cyanAccent),
+          ],
         ),
       ),
     );

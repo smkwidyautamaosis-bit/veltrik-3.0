@@ -18,6 +18,8 @@ dependencies:
   flutter_dotenv: ^6.0.1
   shimmer: ^3.0.0
   screen_protector: ^1.5.1
+  # FIX: Versi dinaikkan agar compatible dengan syncfusion_flutter_pdfviewer
+  device_info_plus: ^12.4.0 
 
 dev_dependencies:
   flutter_test:
