@@ -1,16 +1,83 @@
-# veltrik
+Veltrik 3.0
 
-A new Flutter project.
+Modern premium digital library & e-learning application built with Flutter.
 
-## Getting Started
+✨ Features
+Premium UI/UX
+Authentication System
+Supabase Integration
+Material / PDF Library
+Responsive Layout
+Modern Dashboard
+Bookmark System
+Search & Filter
+User Profile
+Admin Management
+Secure Architecture
+Realtime Support
+🛠 Tech Stack
+Flutter
+Dart
+Supabase
+Firebase
+Provider / Riverpod (sesuaikan)
+REST API
+📱 Platforms
+Android
+Web
+Windows (kalau support)
+🚀 Project Status
 
-This project is a starting point for a Flutter application.
+Veltrik is currently in active development and approaching production release.
 
-A few resources to get you started if this is your first Flutter project:
+Current focus:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+UI/UX polishing
+Performance optimization
+Security improvements
+Production readiness
+📂 Project Structure
+## 📂 Project Structure
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+plaintext
+lib/
+├── core/
+│   └── constants.dart
+│
+├── models/
+│   └── material_model.dart
+│
+├── screens/
+│   ├── admin/
+│   ├── auth/
+│   ├── dashboard/
+│   ├── payment/
+│   ├── profile/
+│   ├── reader/
+│   └── special/
+│
+├── services/
+│
+├── widgets/
+│
+└── main.dart
+
+### Structure Overview
+
+* **core/** → Global constants, app configuration, and shared utilities.
+* **models/** → Data models used throughout the application.
+* **screens/** → Main application pages and feature-based UI screens.
+* **services/** → Backend services, API integration, Supabase/Firebase logic, and business processes.
+* **widgets/** → Reusable UI components and shared widgets.
+* **main.dart** → Main entry point of the Flutter application.
+
+
+Sensitive files are excluded using .gitignore.
+
+Example:
+
+.env
+google-services.json
+key.properties
+
+Developed by Sandi Nutrya.
