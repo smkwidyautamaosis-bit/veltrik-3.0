@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import package dotenv
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
 import 'core/constants.dart';
 import 'screens/auth/splash_screen.dart';
 
@@ -11,11 +12,21 @@ void main() async {
   // 1. Muat file rahasia .env
   await dotenv.load(fileName: ".env");
 
-  // 2. Inisialisasi Supabase menggunakan variabel dari .env
+  // 2. Inisialisasi Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL'] ?? '',
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
+
+  // 3. Inisialisasi OneSignal (Push Notification)
+  // Mode debug (Hapus atau comment baris ini jika sudah masuk rilis production)
+  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+
+  // Initialize dengan App ID OneSignal Veltrik
+  OneSignal.initialize("c08f2819-8fed-403d-8ab3-77dcca5538b8");
+
+  // Request permission dari user (Akan muncul pop-up di Android 13+)
+  OneSignal.Notifications.requestPermission(true);
 
   runApp(const VeltrikApp());
 }
@@ -29,7 +40,7 @@ class VeltrikApp extends StatelessWidget {
       title: 'Veltrik',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: true, // Tambahan untuk UI/UX yang lebih modern
+        useMaterial3: true,
         brightness: Brightness.light,
         scaffoldBackgroundColor: VeltrikColors.lightBg,
         primaryColor: VeltrikColors.cyanAccent,

@@ -18,28 +18,24 @@ dependencies:
   flutter_dotenv: ^6.0.1
   shimmer: ^3.0.0
   screen_protector: ^1.5.1
-  # FIX: Versi dinaikkan agar compatible dengan syncfusion_flutter_pdfviewer
   device_info_plus: ^12.4.0 
+  onesignal_flutter: ^5.1.6 # DITAMBAHKAN UNTUK PUSH NOTIFICATION
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  # Tambahkan ini untuk mengubah ikon aplikasi
   flutter_launcher_icons: ^0.13.1
 
-# Konfigurasi Ikon Aplikasi (Launcher Icon)
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/icon.png" # Path ke logo naga kamu
-  adaptive_icon_background: "#102140" # Warna Navy Veltrik
+  image_path: "assets/images/icon.png" 
+  adaptive_icon_background: "#102140" 
   adaptive_icon_foreground: "assets/images/icon.png"
 
 flutter:
   uses-material-design: true
-
-  # Daftarkan folder assets di sini
   assets: 
    - .env
    - assets/images/icon.png

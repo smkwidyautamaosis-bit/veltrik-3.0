@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "874693776242",
+    "project_id": "veltrik-fb88a",
+    "storage_bucket": "veltrik-fb88a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874693776242:android:3952827f355cac8cf603eb",
+        "android_client_info": {
+          "package_name": "Veltrik.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqTnf3euqoU2ns97OwFaNxVEHdxHaseHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
