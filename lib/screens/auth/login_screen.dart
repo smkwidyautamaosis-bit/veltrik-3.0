@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/supabase_service.dart';
-import '../dashboard/dashboard_screen.dart';
-import '../admin/admin_main_screen.dart';
+import 'splash_screen.dart'; // Import SplashScreen
 import '../../core/constants.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,19 +27,12 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text.trim(),
       );
 
-      // Ambil profil untuk cek role
-      final profile = await _service.getUserProfile();
-      final isAdmin = profile['role'] == 'admin';
-
       if (!mounted) return;
 
-      // Redirect berdasarkan role
+      // FIX: Navigasi ke SplashScreen agar Gatekeeper melakukan pengecekan device & status.
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) =>
-              isAdmin ? const AdminMainScreen() : const DashboardScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const SplashScreen()),
         (route) => false,
       );
     } catch (e) {

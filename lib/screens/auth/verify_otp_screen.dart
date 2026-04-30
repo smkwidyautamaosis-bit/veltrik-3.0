@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'splash_screen.dart'; // Import SplashScreen
 import '../../services/supabase_service.dart';
-import 'login_screen.dart';
+import '../../core/constants.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final String email;
@@ -15,24 +16,29 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final _service = SupabaseService();
   bool _isLoading = false;
 
-  void _verify() async {
+  void _handleVerify() async {
+    if (_otpController.text.trim().isEmpty) return;
+
     setState(() => _isLoading = true);
     try {
-      await _service.verifyOtp(widget.email, _otpController.text);
+      await _service.verifyOtp(widget.email, _otpController.text.trim());
+
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Aktivasi Berhasil!")));
+
+      // FIX: Lempar ke SplashScreen untuk memicu pemeriksaan Single Device Lock.
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (r) => false,
+        MaterialPageRoute(builder: (_) => const SplashScreen()),
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("OTP Salah: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Verifikasi Gagal: $e"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -41,119 +47,66 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6ECF5),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 4,
-            child: Center(
-              // Path gambar sudah diperbaiki
-              child: Image.asset(
-                'assets/images/icon.png',
-                height: 120,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.local_fire_department,
-                  size: 100,
-                  color: Colors.blueAccent,
-                ),
+      backgroundColor: VeltrikColors.lightBg,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: VeltrikColors.navyBase),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Verify OTP",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: VeltrikColors.navyBase,
               ),
             ),
-          ),
-          Expanded(
-            flex: 6,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1B2A49),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+            const SizedBox(height: 10),
+            Text(
+              "Kode verifikasi telah dikirim ke ${widget.email}",
+              style: const TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 40),
+            TextField(
+              controller: _otpController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: "Enter 6-digit OTP",
+                prefixIcon: Icon(Icons.security),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Verifikasi",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+            ),
+            const SizedBox(height: 30),
+            _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: VeltrikColors.cyanAccent,
                     ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 5, bottom: 20),
-                    height: 2,
-                    width: 50,
-                    color: Colors.white,
-                  ),
-
-                  Text(
-                    "Masukkan kode dari email:\n${widget.email}",
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  const SizedBox(height: 20),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      controller: _otpController,
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(
-                        color: Color(0xFF1B2A49),
-                        fontSize: 24,
-                        letterSpacing: 5,
-                        fontWeight: FontWeight.bold,
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _handleVerify,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VeltrikColors.navyBase,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
-                      decoration: const InputDecoration(
-                        hintText: "000000",
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 15),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Center(
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : SizedBox(
-                            width: 150,
-                            height: 45,
-                            child: ElevatedButton(
-                              onPressed: _verify,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF1B2A49),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: const Text(
-                                "Verifikasi",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => _service.resendOtp(widget.email),
                       child: const Text(
-                        "Kirim Ulang Kode",
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        "VERIFY & CONTINUE",
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
