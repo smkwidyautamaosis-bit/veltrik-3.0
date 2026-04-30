@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart'; // Import SplashScreen
+import 'splash_screen.dart';
 import '../../services/supabase_service.dart';
+import '../../utils/device_helper.dart';
 import '../../core/constants.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
@@ -23,9 +24,15 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     try {
       await _service.verifyOtp(widget.email, _otpController.text.trim());
 
+      // Jika menggunakan Web/iOS, paksa generate session token baru untuk takeover session lama
+      if (DeviceHelper.isWebOrIOS) {
+        final newToken = await DeviceHelper.regenerateWebSessionToken();
+        await _service.claimWebSession(newToken);
+      }
+
       if (!mounted) return;
 
-      // FIX: Lempar ke SplashScreen untuk memicu pemeriksaan Single Device Lock.
+      // Lempar ke SplashScreen untuk memicu Gatekeeper verifikasi security/device
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const SplashScreen()),
@@ -58,7 +65,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Verify OTP",
               style: TextStyle(
                 fontSize: 28,

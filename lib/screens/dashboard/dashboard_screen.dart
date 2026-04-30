@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,8 @@ import '../payment/transaction_history_screen.dart';
 import '../admin/admin_main_screen.dart';
 import '../profile/profile_screen.dart';
 import '../special/device_mod_screen.dart';
+import '../../utils/device_helper.dart';
+import '../auth/splash_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,7 +24,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with WidgetsBindingObserver {
   final _service = SupabaseService();
   final _client = Supabase.instance.client;
   List<MaterialModel> _data = [];
@@ -31,11 +35,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _username = 'User';
 
   int _selectedIndex = 0;
+  Timer? _securityTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initDashboard();
+    _startRuntimeSecurityValidation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _securityTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _validateSessionSecurity();
+    }
+  }
+
+  void _startRuntimeSecurityValidation() {
+    _securityTimer = Timer.periodic(const Duration(minutes: 3), (_) {
+      _validateSessionSecurity();
+    });
+  }
+
+  // LOGIC SECONDARY GATEKEEPER (MULTI-PLATFORM)
+  Future<void> _validateSessionSecurity() async {
+    if (_role == 'admin') return;
+    try {
+      Map<String, dynamic> accessResult;
+
+      if (DeviceHelper.isWebOrIOS) {
+        final token = await DeviceHelper.getWebSessionToken();
+        accessResult = await _service.verifyWebAccess(token);
+      } else {
+        final deviceInfo = await DeviceHelper.getDeviceInfo();
+        accessResult = await _service.verifyDeviceAccess(
+          deviceInfo['device_id']!,
+        );
+      }
+
+      if (accessResult['is_allowed'] == false) {
+        _securityTimer?.cancel();
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const SplashScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Abaikan error jaringan
+    }
   }
 
   Future<void> _initDashboard() async {
@@ -48,7 +105,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (mounted) {
         setState(() {
-          // FIX: Penanganan type casting Object? secara aman untuk strict Dart
           _role = profile['role']?.toString() ?? 'user';
           _isPremium = profile['is_premium'] == true;
           _username = profile['username']?.toString() ?? 'User';
@@ -78,17 +134,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: VeltrikColors.lightBg,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildHomeTab(),
-          _buildHistoryOrAdminTab(),
-          const DeviceModScreen(),
-          const ProfileScreen(),
-        ],
+      backgroundColor: VeltrikColors.navyDark, // Web padding background
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 550,
+          ), // Responsive desktop constraint
+          child: Scaffold(
+            backgroundColor: VeltrikColors.lightBg,
+            body: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildHomeTab(),
+                _buildHistoryOrAdminTab(),
+                const DeviceModScreen(),
+                const ProfileScreen(),
+              ],
+            ),
+            bottomNavigationBar: _buildNav(),
+          ),
+        ),
       ),
-      bottomNavigationBar: _buildNav(),
     );
   }
 
@@ -163,10 +229,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Text("Materi Kosong", style: TextStyle(color: Colors.black54)),
       );
     }
+
+    // CrossAxisCount responsif untuk desktop dan mobile
+    double screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = screenWidth > 900 ? 4 : (screenWidth > 600 ? 3 : 2);
+
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: 0.9,

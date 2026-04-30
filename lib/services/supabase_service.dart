@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/material_model.dart';
 
@@ -17,7 +16,7 @@ class SupabaseService {
   }
 
   // ==========================================
-  // 1. SECURE ACCESS & DEVICE LOCK
+  // 1. SECURE ACCESS & DEVICE LOCK (ANDROID)
   // ==========================================
   Future<Map<String, dynamic>> verifyDeviceAccess(String deviceId) async {
     final user = _client.auth.currentUser;
@@ -52,22 +51,67 @@ class SupabaseService {
     return response as bool;
   }
 
+  // ==========================================
+  // 2. WEB & IOS SESSION MANAGEMENT (SOFT LOCK)
+  // ==========================================
+  Future<Map<String, dynamic>> verifyWebAccess(String sessionToken) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("Sesi tidak ditemukan.");
+    final response = await _client.rpc(
+      'verify_web_access',
+      params: {'p_user_id': user.id, 'p_session_token': sessionToken},
+    );
+    return (response as List).first;
+  }
+
+  Future<void> claimWebSession(String sessionToken) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    await _client.rpc(
+      'claim_web_session',
+      params: {'p_user_id': user.id, 'p_session_token': sessionToken},
+    );
+  }
+
+  Future<bool> claimWebAccessCode(
+    String code,
+    String sessionToken,
+    String deviceName,
+  ) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("Sesi tidak ditemukan.");
+    final response = await _client.rpc(
+      'claim_web_access_code',
+      params: {
+        'p_user_id': user.id,
+        'p_code': code,
+        'p_session_token': sessionToken,
+        'p_device_name': deviceName,
+      },
+    );
+    return response as bool;
+  }
+
+  // ==========================================
+  // 3. ADMIN MANAGEMENT
+  // ==========================================
   Future<String> generateUserAccessCode(
     String targetUserId,
     String duration,
   ) async {
-    final code = (100000 + Random().nextInt(900000)).toString();
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("Sesi admin tidak valid.");
 
-    await _client
-        .from('profiles')
-        .update({
-          'access_code': code,
-          'subscription_type': duration,
-          'status': 'pending',
-        })
-        .eq('id', targetUserId);
+    final response = await _client.rpc(
+      'generate_access_code',
+      params: {
+        'p_admin_id': user.id,
+        'p_target_user_id': targetUserId,
+        'p_duration': duration,
+      },
+    );
 
-    return code;
+    return response as String;
   }
 
   Future<void> adminResetDevice(String targetUserId) async {
@@ -81,19 +125,17 @@ class SupabaseService {
   }
 
   Future<void> revokeUserAccess(String targetUserId) async {
-    await _client
-        .from('profiles')
-        .update({
-          'status': 'suspended',
-          'is_premium': false,
-          'linked_device_id': null,
-          'access_expires_at': null,
-        })
-        .eq('id', targetUserId);
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("Sesi admin tidak valid.");
+
+    await _client.rpc(
+      'revoke_user_access',
+      params: {'p_admin_id': user.id, 'p_target_user_id': targetUserId},
+    );
   }
 
   // ==========================================
-  // 2. AUTHENTICATION (LOGIN, REGISTER, PROFILE)
+  // 4. AUTHENTICATION (LOGIN, REGISTER, PROFILE)
   // ==========================================
   Future<void> logout() async {
     await _client.auth.signOut();
@@ -142,14 +184,19 @@ class SupabaseService {
   }
 
   // ==========================================
-  // 3. MATERIALS & CONTENT
+  // 5. MATERIALS & CONTENT
   // ==========================================
   Future<List<MaterialModel>> getMaterials() async {
-    final data = await _client
-        .from('materials')
-        .select()
-        .order('created_at', ascending: false);
-    return (data as List).map((e) => MaterialModel.fromJson(e)).toList();
+    try {
+      final data = await _client
+          .from('materials')
+          .select()
+          .order('created_at', ascending: false);
+      return (data as List).map((e) => MaterialModel.fromJson(e)).toList();
+    } catch (e) {
+      _handleNetworkError(e, "Gagal memuat materi");
+      return [];
+    }
   }
 
   Future<String> createSignedPdfUrl(String filePath) async {
@@ -181,7 +228,7 @@ class SupabaseService {
   }
 
   // ==========================================
-  // 4. TRANSACTIONS & PAYMENTS
+  // 6. TRANSACTIONS & PAYMENTS
   // ==========================================
   Future<void> submitPaymentProof(File proofFile) async {
     final user = _client.auth.currentUser;
@@ -232,7 +279,7 @@ class SupabaseService {
   }
 
   // ==========================================
-  // 5. USER MANAGEMENT
+  // 7. USER MANAGEMENT
   // ==========================================
   Future<List<dynamic>> getAllUsers() async {
     return await _client

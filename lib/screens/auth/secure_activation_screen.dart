@@ -25,25 +25,32 @@ class _SecureActivationScreenState extends State<SecureActivationScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // 1. Ambil informasi device hardware asli
       final deviceInfo = await DeviceHelper.getDeviceInfo();
 
-      // 2. Claim kode akses dan kunci device ke akun
-      await _service.claimAccessCode(
-        _codeController.text.trim(),
-        deviceInfo['device_id']!,
-        deviceInfo['device_name']!,
-      );
+      // Deteksi platform dan gunakan RPC yang sesuai
+      if (DeviceHelper.isWebOrIOS) {
+        await _service.claimWebAccessCode(
+          _codeController.text.trim(),
+          deviceInfo['device_id']!,
+          deviceInfo['device_name']!,
+        );
+      } else {
+        await _service.claimAccessCode(
+          _codeController.text.trim(),
+          deviceInfo['device_id']!,
+          deviceInfo['device_name']!,
+        );
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Device Berhasil Diotorisasi!"),
+          content: Text("Otorisasi Berhasil!"),
           backgroundColor: Colors.green,
         ),
       );
 
-      // 3. Kembalikan ke Splash Screen agar Gatekeeper mengecek ulang & masuk ke Dashboard
+      // Kembalikan ke Splash Screen agar Gatekeeper mengecek ulang & masuk ke Dashboard
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const SplashScreen()),
@@ -112,7 +119,7 @@ class _SecureActivationScreenState extends State<SecureActivationScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Menampilkan alasan kenapa diblokir (misal: "Device is linked to another account")
+                // Menampilkan alasan kenapa diblokir
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15,
@@ -168,7 +175,7 @@ class _SecureActivationScreenState extends State<SecureActivationScreen> {
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
                           hintText: "Enter 6-8 digit code",
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Colors.white38,
                             fontSize: 14,
                           ),

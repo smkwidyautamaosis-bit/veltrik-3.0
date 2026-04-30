@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/supabase_service.dart';
-import '../../utils/device_helper.dart'; // Import Device Helper
+import '../../utils/device_helper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../admin/admin_main_screen.dart';
 import 'welcome_screen.dart';
-import 'secure_activation_screen.dart'; // Import Secure Activation
+import 'secure_activation_screen.dart';
 import '../../core/constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -27,16 +27,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkSessionAndDevice() async {
     await Future.delayed(const Duration(seconds: 2));
     final session = Supabase.instance.client.auth.currentSession;
-
     if (!mounted) return;
 
     if (session != null) {
       try {
         final profile = await _service.getUserProfile();
         final isAdmin = profile['role'] == 'admin';
-
         if (isAdmin) {
-          // Admin bebas dari device lock
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
@@ -45,14 +42,18 @@ class _SplashScreenState extends State<SplashScreen> {
           return;
         }
 
-        // --- GATEKEEPER LOGIC UNTUK USER BIASA ---
-        // 1. Ambil Device ID perangkat ini
-        final deviceInfo = await DeviceHelper.getDeviceInfo();
+        // --- GATEKEEPER MULTI-PLATFORM ---
+        Map<String, dynamic> accessResult;
 
-        // 2. Verifikasi ke Supabase RPC
-        final accessResult = await _service.verifyDeviceAccess(
-          deviceInfo['device_id']!,
-        );
+        if (DeviceHelper.isWebOrIOS) {
+          final token = await DeviceHelper.getWebSessionToken();
+          accessResult = await _service.verifyWebAccess(token);
+        } else {
+          final deviceInfo = await DeviceHelper.getDeviceInfo();
+          accessResult = await _service.verifyDeviceAccess(
+            deviceInfo['device_id']!,
+          );
+        }
 
         final isAllowed = accessResult['is_allowed'] == true;
         final reason = accessResult['reason']?.toString() ?? 'Access Denied';
@@ -60,22 +61,36 @@ class _SplashScreenState extends State<SplashScreen> {
         if (!mounted) return;
 
         if (isAllowed) {
-          // Device cocok, masa aktif masih ada -> Masuk Dashboard
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const DashboardScreen()),
           );
         } else {
-          // Device tidak cocok / belum aktif / expired -> Masuk Halaman Aktivasi
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => SecureActivationScreen(reason: reason),
-            ),
-          );
+          // Jika Session tertendang oleh device/browser lain (WEB/iOS logic)
+          if (reason == 'session_takeover') {
+            await Supabase.instance.client.auth.signOut();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Sesi berakhir karena Anda login di perangkat web/iOS lain.",
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SecureActivationScreen(reason: reason),
+              ),
+            );
+          }
         }
       } catch (e) {
-        // Jika ada error jaringan atau sesi bermasalah, kembali ke Welcome
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -102,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const CircularProgressIndicator(color: VeltrikColors.cyanAccent),
             const SizedBox(height: 20),
             const Text(
-              "Verifying Environment...",
+              "Verifying Secure Environment...",
               style: TextStyle(
                 color: Colors.white54,
                 fontSize: 12,
